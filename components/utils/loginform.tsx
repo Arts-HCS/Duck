@@ -1,0 +1,110 @@
+"use client";
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function LoginForm(){
+
+    const [showPassword, setShowPassword] = useState(false);
+
+    const [fetchResponse, setFetchResponse] = useState("");
+
+    const router = useRouter();
+
+    const [formData, setFormData] = useState({
+        email: "",
+        password: ""
+    })
+
+    const handlePassword = (e:any) =>{
+        e.preventDefault();
+        setShowPassword(!showPassword);
+    }
+
+    const hanleSubmit = async (e:SubmitEvent | any) =>{
+        e.preventDefault()
+
+        const {email, password} = formData;
+
+        const data = await fetch('/api/loginUser', {
+            method: "POST",
+            headers: {
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                email,
+                password
+            })
+        })
+        const resp = await data.json()
+        setFetchResponse(resp.message);
+
+        if (resp.message === "exito"){
+            const userId = await resp.user.id
+            router.push(`/home/${userId}`)
+        }
+
+    }
+
+    return(
+        <form 
+            onSubmit={(e)=> hanleSubmit(e)}
+            className="w-[70%] p-5 border-[#3B3440] border-2 rounded-2xl glass-dark bg-[#0c0d0e86]"
+        >
+            <label className="block mb-2 text-[20px]" htmlFor="email">Email</label>
+            <input 
+                className="input-styles"
+                type="email" 
+                required
+                name="email" 
+                value = {formData.email}
+                onChange = {(e) => {
+                    setFetchResponse("")
+                    setFormData({...formData, email: e.target.value})
+                }}
+                id="email" 
+                placeholder="Escribe tu correo electrónico..." 
+            />
+            <label className="block mb-2 text-[20px]" htmlFor="email">Contraseña</label>
+            <div className='flex items-center justify-start gap-3'>
+                <input 
+                    className="outline-none border-[#3B3440] rounded-2xl p-3 w-full bg-(--blackground) border-2 focus:bg-(--background) focus:text-(--black-color) transition-all"
+                    type={`${showPassword ? "text" : "password"}`} 
+                    name="email" 
+                    required
+                    id="email" 
+                    value = {formData.password}
+                    onChange = {(e) =>{
+                        setFetchResponse("")
+                        setFormData({...formData, password: e.target.value})
+                    }}
+                    placeholder="Crea tu contraseña..." 
+                />
+                <button 
+                    onClick={(e)=> handlePassword(e)} 
+                    className='p-2 cursor-pointer text-2xl self-center rounded-2xl bg-(--background) text-(--blackground)'>
+                        {showPassword ? <i className="fa-solid fa-eye-slash"></i> : <i className="fa-solid fa-eye"></i> }
+                        
+                </button>
+            </div>
+
+            {fetchResponse === 'notfound' &&(
+                <p className='w-full p-3 rounded-2xl text-center bg-(--red-color) text-xl mt-10'>
+                    No se encontró la cuenta
+                </p>
+            )}
+            {fetchResponse === 'notpassword' &&(
+                <p className='w-full p-3 rounded-2xl text-center bg-yellow-700 text-xl mt-10'>
+                    Contraseña incorrecta
+                </p>
+            )}
+
+            <button 
+                className='transition-all w-full p-3 rounded-2xl bg-[linear-gradient(170deg,#ffffff,40%,#9b9b9b)] text-(--blackground) text-[20px] font-normal hover:scale-101 hover:shadow-[0_0px_15px_rgba(255,255,255,0.2)] mt-10 cursor-pointer'
+                type='submit'>
+                    Continuar
+            </button>
+
+        </form>
+    )
+}
