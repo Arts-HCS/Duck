@@ -27,7 +27,6 @@ model Tarea {
   day       Int
   month     Int
   year      Int
-  status    Int
   createdAt DateTime @default(now())
 
   relationUser Usuario @relation(fields: [userId], references: [id])

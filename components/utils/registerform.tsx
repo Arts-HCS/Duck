@@ -29,15 +29,15 @@ export default function RegisterForm({ setBaseText, setGottenName, setSuccess }:
 
         } 
 
-        const data = await fetch('/api/registerUser', {
+        const data = await fetch('http://localhost:3000/api/registerUser', {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                name,
-                email, 
-                password
+                name: name,
+                email: email, 
+                password: password
             })
         })
         const resp = await data.json()

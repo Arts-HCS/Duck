@@ -3,10 +3,7 @@ import OpenAI from "openai";
 import dotenv from "dotenv"
 dotenv.config()
 
-const apiKey = process.env.OPENAI_API;
-const now = new Date();
-const today = now.toLocaleDateString("en-CA");     
-const time = now.toLocaleTimeString("es-MX");   
+const apiKey = process.env.OPENAI_API;  
 
 const client = new OpenAI({
     apiKey: apiKey
@@ -14,6 +11,16 @@ const client = new OpenAI({
 
 
 export async function POST(req: Request){
+    const now = new Date();
+    const today = now.toLocaleDateString("en-CA", {
+        timeZone: "America/Mexico_City"
+    });
+    
+    const time = now.toLocaleTimeString("es-MX", {
+        timeZone: "America/Mexico_City",
+        hour12: false
+    });
+
     const body = await req.json()
     const {content} = body;
 
@@ -23,9 +30,13 @@ export async function POST(req: Request){
             {
                 role: "system",
                 content: `
+                Hoy es ${today}.
+                Hora actual ${time}.
                 
                 Sistema para extraer tareas desde un texto en español.
-                Si el input tiene contenido sexual, saludos, lenguaje indebido o no permitido, responde solo: Error
+                Si el input tiene contenido sexual, responde solo: Error
+                Si el input contiene groserías pero lo que dice tiene sentido, responde con normalidad.
+                Ninguna de tus respuestas "Error" debe contener puntos o comas.
 
                 Devuelve una sola línea con cuatro campos, separados por comas y en este orden:
                 fecha (YYYY-MM-DD), hora (HH:MM 24h), descripción, título.
@@ -38,13 +49,15 @@ export async function POST(req: Request){
 
                     Corrige errores ortográficos.
 
-                    Si no hay día: antes de 14:00 usa hoy; después, mañana.
+                    Si no hay día y la hora es después de las 17:00, devuelve mañana.
 
-                    "Mañana" = día siguiente.
+                    Si se dice "mañana": devuelve el día después de hoy.
 
-                    Nunca fechas pasadas.
+                    Si no se especifica si es hora de mañana o tarde, escoge tarde.
 
                     Sin descripción: campo vacío.
+
+                    Cuando se diga una materia pero no se especifique el tipo de tarea, di que es una actividad, no una clase.
 
                     Sin hora: 12:00.
 
@@ -54,9 +67,9 @@ export async function POST(req: Request){
 
                     No inventes datos.
 
-                    Texto incoherente o sin actividad real: Error
+                    Si el texto contiene una materia y una fecha, responde con normalidad.
                     
-                    Si al menos una palabra no tiene sentido, responde: Error
+                    Si una palabra tiene errores ortográficos leeves, corrígelo, pero si contiene carácteres sin sentido, responde: Error
                     `
             },
             {

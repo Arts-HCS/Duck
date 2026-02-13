@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+
+function createToken(){
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+}
 
 export default function LoginForm(){
 
     const [showPassword, setShowPassword] = useState(false);
 
     const [fetchResponse, setFetchResponse] = useState("");
-
-    const router = useRouter();
+    const [unauthorized, setUnauthorized] = useState(false);
 
     const [formData, setFormData] = useState({
         email: "",
@@ -41,10 +44,23 @@ export default function LoginForm(){
 
         if (resp.message === "exito"){
             const userId = await resp.user.id
-            router.push(`/home/${userId}`)
+
+            localStorage.setItem("userWelcome", JSON.stringify({userId}));
+            router.push(`/home`)
         }
 
     }
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    useEffect(()=>{
+        if (searchParams.get('unauthorized') === "1"){
+            setUnauthorized(true)            
+            router.replace('/login')
+        }
+        localStorage.removeItem('userWelcome')
+
+    }, [searchParams, router])
 
     return(
         <form 
@@ -60,6 +76,7 @@ export default function LoginForm(){
                 value = {formData.email}
                 onChange = {(e) => {
                     setFetchResponse("")
+                    setUnauthorized(false)
                     setFormData({...formData, email: e.target.value})
                 }}
                 id="email" 
@@ -76,6 +93,7 @@ export default function LoginForm(){
                     value = {formData.password}
                     onChange = {(e) =>{
                         setFetchResponse("")
+                        setUnauthorized(false)
                         setFormData({...formData, password: e.target.value})
                     }}
                     placeholder="Crea tu contraseña..." 
@@ -96,6 +114,11 @@ export default function LoginForm(){
             {fetchResponse === 'notpassword' &&(
                 <p className='w-full p-3 rounded-2xl text-center bg-yellow-700 text-xl mt-10'>
                     Contraseña incorrecta
+                </p>
+            )}
+            {unauthorized &&(
+                <p className='w-full text-(--white-color) p-3 rounded-2xl text-center bg-red-600 text-xl mt-10'>
+                    Inicio de sesión no autorizado
                 </p>
             )}
 
